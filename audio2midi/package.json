@@ -1,0 +1,22 @@
+{
+  "name": "audio2midi",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.5.0",
+  "dependencies": {
+    "@spotify/basic-pitch": "^1.0.1",
+    "@tensorflow/tfjs": "^3.2.0",
+    "@tensorflow/tfjs-node": "^3.2.0",
+    "@tonejs/midi": "^2.0.28",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "web-audio-api": "^0.2.2"
+  }
+}
