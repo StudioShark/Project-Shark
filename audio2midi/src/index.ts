@@ -1,4 +1,3 @@
-import * as tf from "@tensorflow/tfjs";
 import "@spotify/basic-pitch";
 import {
   addPitchBendsToNoteEvents,
@@ -7,12 +6,17 @@ import {
   noteFramesToTime,
   outputToNotesPoly,
 } from "@spotify/basic-pitch";
+import * as tf from "@tensorflow/tfjs";
 import { Midi } from "@tonejs/midi";
+import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 
 const webAudioApi = require("web-audio-api");
 const { AudioContext } = webAudioApi;
 require("@tensorflow/tfjs-node");
+
+const inputFileName = "data/input.mp3";
+const resampledFileName = "data/input.resampled.wav";
 
 // @ts-ignore
 function writeDebugOutput(
@@ -67,9 +71,28 @@ function writeDebugOutput(
   fs.writeFileSync(`${name}.mid`, midi.toArray());
 }
 
+const resampleAudio = (
+  inputFileName: string,
+  outputFileName: string,
+  callback: (err: any) => void
+) => {
+  ffmpeg(inputFileName)
+    .audioChannels(1)
+    .audioFrequency(22050)
+    .save(outputFileName)
+    .on("end", () => {
+      console.log("Resampled audio file saved as", outputFileName);
+      callback(null);
+    })
+    .on("error", (err: any) => {
+      console.error("Error resampling audio file:", err);
+      callback(err);
+    });
+};
+
 const main = async () => {
   const model = tf.loadGraphModel(`file://${__dirname}/model/model.json`);
-  const wavBuffer = fs.readFileSync(`input.mp3`);
+  const wavBuffer = fs.readFileSync(resampledFileName);
 
   const audioCtx: any = new AudioContext();
   let audioBuffer;
@@ -143,7 +166,7 @@ const main = async () => {
       outputToNotesPoly(frames, onsets, 0.5, 0.3, 5, true, null, null, false)
     )
   );
-  writeDebugOutput("poly", poly, polyNoMelodia); // use if we update the note creation
+  writeDebugOutput("data/output", poly, polyNoMelodia); // use if we update the note creation
   // const polyNotes: NoteEventTime[] = require('../test_data/poly.json');
   // const polyNoMelodiaNotes: NoteEventTime[] = require('../test_data/poly.nomelodia.json');
 
@@ -151,4 +174,10 @@ const main = async () => {
   // expect(polyNoMelodia).toBeCloseToMidi(polyNoMelodiaNotes, 1e-3, 0);
 };
 
-main();
+resampleAudio(inputFileName, resampledFileName, (err) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  main();
+});
